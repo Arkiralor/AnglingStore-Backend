@@ -17,6 +17,10 @@ class RequestLog(TemplateModel):
         return f"Request at {self.created}"
     
     class Meta:
+        indexes = (
+            models.Index(fields=("id",)),
+            models.Index(fields=("method", "path"))
+        )
         verbose_name = "Incoming Request"
         verbose_name_plural = "Incoming Requests"
         ordering = ("-created",)

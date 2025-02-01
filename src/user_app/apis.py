@@ -56,7 +56,7 @@ class RegisterUserAPI(APIView):
 
         resp = UserModelHelpers.create(data=data)
 
-        _ = UserModelHelpers.log_login_ip(
+        UserModelHelpers.log_login_ip(
             user=f"{resp.data.get('id', '')}", request=request)
         return resp.to_response()
 
@@ -73,9 +73,9 @@ class PasswordLoginAPI(APIView):
             username=username, email=email, password=password)
 
         if not resp.error:
-            _ = UserModelHelpers.log_login_ip(
+            UserModelHelpers.log_login_ip(
                 user=f"{resp.data.get('user', '')}", request=request)
-            _ = UserModelHelpers.log_login_mac(
+            UserModelHelpers.log_login_mac(
                 user=f"{resp.data.get('user', '')}", request=request)
         return resp.to_response()
 
@@ -98,9 +98,9 @@ class OTPLoginConfirmAPI(APIView):
         otp_id = request.data.get("otp_id", "")
         resp = UserModelHelpers.login_via_otp(otp=otp, otp_id=otp_id)
         if not resp.error:
-            _ = UserModelHelpers.log_login_ip(
+            UserModelHelpers.log_login_ip(
                 user=f"{resp.data.get('user').get('id', '')}", request=request)
-            _ = UserModelHelpers.log_login_mac(
+            UserModelHelpers.log_login_mac(
                 user=f"{resp.data.get('user').get('id', '')}", request=request)
         return resp.to_response()
 

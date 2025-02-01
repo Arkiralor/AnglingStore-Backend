@@ -16,7 +16,8 @@ from core.boilerplate.response_template import Resp
 from core.settings import MAC_HEADER
 from database.collections import DatabaseCollections
 from database.methods import SynchronousMethods
-from database.synchronous import s_db
+# from database.synchronous import s_db
+from job_handler_app.utils import enqueue_job_decorator
 from user_app.models import User, UserProfile, UserLoginOTP, UserPasswordResetToken, UserToken
 from user_app.model_choices import UserModelChoices
 from user_app.serializers import UserRegisterSerializer, ShowUserSerializer, UserProfileInputSerializer, UserProfileOutputSerializer,\
@@ -222,28 +223,7 @@ class UserModelHelpers:
         except Exception as ex:
             logger.warn(f"{ex}")
             return ""
-
-    @classmethod
-    def log_login_ip(cls, user: str = None, request: HttpRequest = None) -> None:
-        """
-        Log a user's IP address when successfully logging in.
-        """
-        ip = cls.get_ip_address(request=request)
-        if ip:
-            try:
-                data = {
-                    "_id": f"{uuid4()}".replace("-", "").upper(),
-                    "user": user,
-                    "ip": ip,
-                    "userAgent": request.headers.get("User-Agent", "").split("/")[0],
-                    "timestampUtc": datetime.utcnow()
-                }
-
-                _ = SynchronousMethods.insert_one(
-                    data=data, collection=DatabaseCollections.user_ips)
-            except Exception as ex:
-                logger.warn(f"{ex}")
-
+    
     @classmethod
     def login_via_password(cls, username: str = None, email: str = None, password: str = None, *args, **kwargs) -> Resp:
         """
@@ -668,6 +648,29 @@ class UserModelHelpers:
         logger.info(resp.message)
         return resp
 
+    @enqueue_job_decorator
+    @classmethod
+    def log_login_ip(cls, user: str = None, request: HttpRequest = None) -> None:
+        """
+        Log a user's IP address when successfully logging in.
+        """
+        ip = cls.get_ip_address(request=request)
+        if ip:
+            try:
+                data = {
+                    "_id": f"{uuid4()}".replace("-", "").upper(),
+                    "user": user,
+                    "ip": ip,
+                    "userAgent": request.headers.get("User-Agent", "").split("/")[0],
+                    "timestampUtc": datetime.utcnow()
+                }
+
+                SynchronousMethods.insert_one(
+                    data=data, collection=DatabaseCollections.user_ips)
+            except Exception as ex:
+                logger.warn(f"{ex}")
+
+    @enqueue_job_decorator
     @classmethod
     def log_login_mac(self, user: str = None, request: HttpRequest = None) -> None:
         mac = request.headers.get(MAC_HEADER)
@@ -679,7 +682,7 @@ class UserModelHelpers:
                     "mac": mac,
                     "timestampUtc": datetime.utcnow()
                 }
-                _ = SynchronousMethods.insert_one(
+                SynchronousMethods.insert_one(
                     data=data, collection=DatabaseCollections.user_mac_addresses)
             except Exception as ex:
                 logger.warn(f"{ex}")
