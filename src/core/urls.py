@@ -8,7 +8,7 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView, To
 from core import logger
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # path('admin/', admin.site.urls),
 
     path('api/admin/', include('admin_app.endpoints')),
     path('api/jobs/', include('job_handler_app.endpoints')),
@@ -23,9 +23,13 @@ urlpatterns = [
 ]
 
 if settings.DEBUG and settings.ENV_TYPE.lower() == 'dev':
+    urlpatterns += [path('admin/', admin.site.urls, name='admin-site')]
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += [path("__debug__/", include("debug_toolbar.urls"))]
+
+else:
+    urlpatterns += [path('412min/', admin.site.urls, name='admin-site')]
 
 
 logger.info(f"Running in {settings.ENV_TYPE.upper()} mode with DEBUG: {settings.DEBUG}")
