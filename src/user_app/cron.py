@@ -6,7 +6,8 @@ from django.conf import settings
 from django.db.models import Q
 from django.utils import timezone
 
-from user_app.models import User, UserLoginOTP, UserToken
+from job_handler_app.utils import enqueue_job_decorator
+from user_app.models import User, UserLoginOTP, UserToken, UserTokenUsage
 
 class DeleteInactiveUsers(CronJobBase):
     """
@@ -17,6 +18,7 @@ class DeleteInactiveUsers(CronJobBase):
 
     code = 'delete_inactive_users'
 
+    @enqueue_job_decorator
     def do(self):
         SEVEN_DAYS_AGO: datetime = datetime.now(pytz.timezone(settings.TIME_ZONE)) - timedelta(days=7)
         _ = User.objects.filter(
@@ -34,6 +36,7 @@ class DeleteAbandonedUsers(CronJobBase):
 
     code = 'delete_abandoned_users'
 
+    @enqueue_job_decorator
     def do(self):
         ONE_YEAR_SIX_MONTHS_AGO: datetime = datetime.now(pytz.timezone(settings.TIME_ZONE)) - timedelta(days=548) ## (prithoo): 364.25 days times 1.5 is equal to 547.875 days
         _ = User.objects.filter(
@@ -51,6 +54,7 @@ class DeleteExpiredLoginOTPs(CronJobBase):
 
     code = 'delete_expired_login_otps'
 
+    @enqueue_job_decorator
     def do(self):
         NOW: datetime = timezone.now()
         _ = UserLoginOTP.objects.filter(
@@ -68,8 +72,36 @@ class DeleteExpiredUserLoginTokens(CronJobBase):
 
     code = 'delete_expired_user_logins_tokens'
 
+    @enqueue_job_decorator
     def do(self):
         NOW: datetime = timezone.now()
-        _ = UserToken.objects.filter(
+        objs = UserToken.objects.filter(
             expires_at__lte=NOW
-        ).delete()
+        )
+
+        # Iterating through a generator for better memory-management in background scheduled task.
+        for _, item in enumerate(objs):
+            item.delete()
+
+
+
+
+class DeleteOldUserTokenUsage(CronJobBase):
+    """
+    Deletes records of users' permanent token usage from 1 year ago.
+    """
+    RUN_MONTHLY_ON_DAYS = [1, 15, 25]
+    schedule = Schedule(run_monthly_on_days=RUN_MONTHLY_ON_DAYS)
+
+    code = 'delete_old_permanent_token_usage_logs'
+
+    @enqueue_job_decorator
+    def do(self):
+        ONE_YEAR_AGO: datetime = timezone.now() - timedelta(days=365)
+        objs = UserTokenUsage.objects.filter(
+            created__lte = ONE_YEAR_AGO
+        )
+
+        # Iterating through a generator for better memory-management in background scheduled task.
+        for _, item in enumerate(objs):
+            item.delete()

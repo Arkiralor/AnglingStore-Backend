@@ -1,8 +1,9 @@
+from functools import wraps
 import pickle
 import pytz
 import rq
 from rq.job import Job
-from typing import Callable
+from typing import Callable, Any, Tuple, Dict
 
 from django.conf import settings
 
@@ -29,7 +30,7 @@ def enqueue_job(func: Callable, job_q: str = JobQ.DEFAULT_Q, is_async: bool = Tr
     return job
 
 
-def enqueue_job_decorator(func: Callable, job_q: str = JobQ.DEFAULT_Q, is_async: bool = True, *args, **kwargs):
+def enqueue_job_decorator(func: Callable[..., Any], job_q: str = JobQ.DEFAULT_Q, is_async: bool = True, *args, **kwargs) -> Callable[..., Any]:
     """
     Same as `enqueue_job`, but in the format of a decorator, for easier implementation.
     """
@@ -37,7 +38,8 @@ def enqueue_job_decorator(func: Callable, job_q: str = JobQ.DEFAULT_Q, is_async:
         logger.warning(f"job_q must be one of {JobQ.ALL_QS}")
         return None
 
-    def wrapper():
+    @wraps(func)
+    def wrapper(*args: Tuple, **kwargs: Dict) -> Any:
         try:
             job = rq.Queue(
                 name=job_q,

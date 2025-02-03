@@ -25,7 +25,16 @@ INSTALLED_APPS = DEFAULT_APPS+THIRD_PARTY_APPS+CUSTOM_APPS
 MIDDLEWARE = DEFAULT_MIDDLEWARE+THIRD_PARTY_MIDDLEWARE+CUSTOM_MIDDLEWARE
 
 if DEBUG:
-    INSTALLED_APPS.extend(["debug_toolbar"])
+    INSTALLED_APPS.extend(
+        [
+            "debug_toolbar"
+        ]
+    )
+    MIDDLEWARE.extend(
+        [
+            'debug_toolbar.middleware.DebugToolbarMiddleware'
+        ]
+    )
 
 ROOT_URLCONF = 'core.urls'
 
