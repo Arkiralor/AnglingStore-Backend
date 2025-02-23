@@ -17,8 +17,9 @@ THIRD_PARTY_APPS = [
 CUSTOM_APPS = [
     'admin_app.apps.AdminAppConfig',
     'communications_app.apps.CommunicationsAppConfig',
+    'inventory_app.apps.InventoryAppConfig',
     'job_handler_app.apps.JobHandlerAppConfig',
     'middleware_app.apps.MiddlewareAppConfig',
-    'post_app.apps.PostAppConfig',
+    'store_app.apps.StoreAppConfig',
     'user_app.apps.UserAppConfig'
 ]

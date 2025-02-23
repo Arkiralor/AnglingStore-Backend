@@ -47,7 +47,7 @@ class IpAddressChecker(object):
         """
 
         if not headers.get("Authorization"):
-            logger.warn("No authorization header.")
+            logger.warning("No authorization header.")
             return None
 
         try:
@@ -75,7 +75,7 @@ class IpAddressChecker(object):
 
             return ip
         except Exception as ex:
-            logger.warn(f"{ex}")
+            logger.warning(f"{ex}")
             return None
 
     def check_previous_ip(self, user_id: str = None, ip: str = None):
